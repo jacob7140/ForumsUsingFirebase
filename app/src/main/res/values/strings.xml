@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Forums_Firebase</string>
+    <string name="editTextEmail">Email</string>
+    <string name="editTextPassword">Password</string>
+    <string name="buttonLogin">Login</string>
+    <string name="buttonLoginCreateNewAccount">Create New Account</string>
+    <string name="editTextRegisterName">Name</string>
+    <string name="editTextRegisterEmail">Email</string>
+    <string name="editTextRegisterPassword">Password</string>
+    <string name="buttonRegisterSubmit">Submit</string>
+    <string name="buttonRegisterCancel">Cancel</string>
+    <string name="buttonForumsLogout">Logout</string>
+    <string name="buttonForumsAddForum">New Forum</string>
+</resources>

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "102074036816",
+    "project_id": "class8-forums",
+    "storage_bucket": "class8-forums.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:102074036816:android:4398b547daa1d10d8cd755",
+        "android_client_info": {
+          "package_name": "com.example.forums_firebase"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "102074036816-0hubp6eotc8j9ttab2a2o641ulf1t6lh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCe4iqs8EaP_vjEPImhtRhMiN0iwvRMpHA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "102074036816-0hubp6eotc8j9ttab2a2o641ulf1t6lh.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
