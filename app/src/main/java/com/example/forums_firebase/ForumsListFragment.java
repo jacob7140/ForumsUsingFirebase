@@ -4,9 +4,12 @@ import android.content.Context;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,19 +17,25 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 
 
 public class ForumsListFragment extends Fragment {
-//    private static final String ARG_PARAM_AUTH_RES = "ARG_PARAM_AUTH_RES";
-//
+
     private FirebaseAuth mAuth = FirebaseAuth.getInstance();
     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
     final private String TAG = "data";
-
 
 
     public ForumsListFragment() {
@@ -39,9 +48,14 @@ public class ForumsListFragment extends Fragment {
         super.onCreate(savedInstanceState);
     }
 
+    RecyclerView recyclerView;
+    ForumsAdapter adapter;
+    RecyclerView.LayoutManager layoutManager;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        getActivity().setTitle("Forums List");
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_forums_list, container, false);
         String userName = user.getDisplayName();
@@ -57,7 +71,47 @@ public class ForumsListFragment extends Fragment {
             }
         });
 
+        recyclerView = view.findViewById(R.id.recyclerView);
+        recyclerView.setHasFixedSize(true);
+        layoutManager = new LinearLayoutManager(getActivity());
+        recyclerView.setLayoutManager(layoutManager);
+        adapter = new ForumsAdapter();
+        recyclerView.setAdapter(adapter);
+
+        setUpForumsListener();
+
+        view.findViewById(R.id.buttonForumsAddForum).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mListener.gotoAddNewForum();
+            }
+        });
+
+
+
         return view;
+    }
+
+    private void setUpForumsListener(){
+        FirebaseFirestore db1 = FirebaseFirestore.getInstance();
+
+        db1.collection("forums").orderBy("createdAt", Query.Direction.DESCENDING).addSnapshotListener(new EventListener<QuerySnapshot>() {
+            @Override
+            public void onEvent(@Nullable QuerySnapshot querySnapshot, @Nullable FirebaseFirestoreException error) {
+                if (error == null){
+                    forumsList.clear();
+                    for (QueryDocumentSnapshot document : querySnapshot){
+                        Forum forum = document.toObject(Forum.class);
+                        forum.setForumId(document.getId());
+                        forumsList.add(forum);
+                    }
+                    adapter.notifyDataSetChanged();
+                } else {
+                    error.printStackTrace();
+                }
+            }
+        });
+
     }
 
     ForumsListListener mListener;
@@ -72,105 +126,94 @@ public class ForumsListFragment extends Fragment {
         }
     }
 
-//    class ForumsAdapter extends RecyclerView.Adapter<ForumsAdapter.ForumViewHolder> {
-//
-//        @NonNull
-//        @Override
-//        public ForumViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-//            View view = LayoutInflater.from(parent.getContext())
-//                    .inflate(R.layout.forum_list_item, parent, false);
-//            return new ForumViewHolder(view);
-//        }
-//
-//        @Override
-//        public int getItemCount() {
-//            return 0;
-//        }
-//
-//        @Override
-//        public void onBindViewHolder(@NonNull ForumViewHolder holder, int position) {
-//            DataServices.Forum forum = forums.get(position);
-//            holder.setupForumItem(forum);
-//        }
-//
-//        class ForumViewHolder extends RecyclerView.ViewHolder{
-//            TextView textViewTitle, textViewDesc, textViewOwner, textViewLikesAndDate;
-//            ImageView imageViewLike, imageViewDeleteForum;
-//            DataServices.Forum mForum;
-//
-//
-//            public ForumViewHolder(@NonNull View itemView) {
-//                super(itemView);
-//                textViewTitle = itemView.findViewById(R.id.textViewTitle);
-//                textViewDesc = itemView.findViewById(R.id.textViewDesc);
-//                textViewOwner = itemView.findViewById(R.id.textViewOwner);
-//                textViewLikesAndDate = itemView.findViewById(R.id.textViewLikesAndDate);
-//                imageViewLike = itemView.findViewById(R.id.imageViewLike);
-//                imageViewDeleteForum = itemView.findViewById(R.id.imageViewDeleteForum);
-//
-//                itemView.setOnClickListener(new View.OnClickListener() {
-//                    @Override
-//                    public void onClick(View view) {
-//                        mListener.gotoForumDetails(mForum);
-//                    }
-//                });
-//            }
-//
-//            public void setupForumItem(DataServices.Forum forum){
-//                this.mForum = forum;
-//                textViewTitle.setText(forum.getTitle());
-//
-//                String desc200 = forum.getDescription().substring(0, Math.min(200, forum.getDescription().length()));
-//
-//                textViewDesc.setText(desc200);
-//                textViewOwner.setText(forum.getCreatedBy().getName());
-//
-//                int likeCount = forum.getLikedBy().size();
-//                String likeString = "No Likes";
-//                if(likeCount == 1){
-//                    likeString = "1 Like";
-//                } else {
-//                    likeString = likeCount + " Likes";
-//                }
-//
-//                SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy h:m a");
-//                textViewLikesAndDate.setText(likeString + " | " + formatter.format(forum.getCreatedAt()));
-//
-//                if(forum.getCreatedBy().uid == mAuthResponse.getAccount().uid){
-//                    imageViewDeleteForum.setVisibility(View.VISIBLE);
-//                    imageViewDeleteForum.setOnClickListener(new View.OnClickListener() {
-//                        @Override
-//                        public void onClick(View view) {
-//                            new DeleteForumTask(mForum.getForumId(), mAuthResponse.getToken()).execute();
-//                        }
-//                    });
-//                } else {
-//                    imageViewDeleteForum.setVisibility(View.INVISIBLE);
-//                }
-//
-//                if(forum.getLikedBy().contains(mAuthResponse.getAccount())){
-//                    imageViewLike.setImageResource(R.drawable.like_favorite);
-//                } else {
-//                    imageViewLike.setImageResource(R.drawable.like_not_favorite);
-//                }
-//
-//                imageViewLike.setOnClickListener(new View.OnClickListener() {
-//                    @Override
-//                    public void onClick(View view) {
-//                        if(forum.getLikedBy().contains(mAuthResponse.getAccount())){
-//                            new LikeOrUnlikeForumTask(mForum.getForumId(), mAuthResponse.getToken(), false).execute();
-//                        } else {
-//                            new LikeOrUnlikeForumTask(mForum.getForumId(), mAuthResponse.getToken(), true).execute();
-//                        }
-//                    }
-//                });
-//
-//
-//
-//
-//            }
-//        }
-//    }
+    ArrayList<Forum> forumsList = new ArrayList<Forum>();
+
+    class ForumsAdapter extends RecyclerView.Adapter<ForumsAdapter.ForumViewHolder> {
+
+        @NonNull
+        @Override
+        public ForumViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.forum_list_item, parent, false);
+            return new ForumViewHolder(view);
+        }
+
+        @Override
+        public int getItemCount() {
+            return forumsList.size();
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ForumViewHolder holder, int position) {
+            Forum forum = forumsList.get(position);
+            holder.setupForumRow(forum);
+        }
+
+        class ForumViewHolder extends RecyclerView.ViewHolder{
+            TextView textViewTitle, textViewDesc, textViewOwner, textViewLikesAndDate;
+            ImageView imageViewLike, imageViewDeleteForum;
+            Forum mForum;
+
+
+            public ForumViewHolder(@NonNull View itemView) {
+                super(itemView);
+                textViewTitle = itemView.findViewById(R.id.textViewTitle);
+                textViewDesc = itemView.findViewById(R.id.textViewDesc);
+                textViewOwner = itemView.findViewById(R.id.textViewOwner);
+                textViewLikesAndDate = itemView.findViewById(R.id.textViewLikesAndDate);
+                imageViewDeleteForum = itemView.findViewById(R.id.imageViewDeleteForum);
+
+                itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        //mListener.gotoForumDetails();
+                    }
+                });
+            }
+
+            public void setupForumRow(Forum forum){
+                this.mForum = forum;
+                textViewTitle.setText(mForum.getTitle());
+
+                textViewDesc.setText(getSafeSubstring(mForum.getDesc(), 200));
+                textViewOwner.setText(mForum.getCreatedByName());
+
+                mForum.setCreatedByUid(mAuth.getCurrentUser().getUid());
+
+                SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy h:m a");
+                textViewLikesAndDate.setText(formatter.format(mForum.getCreatedAt().toDate()));
+                //textViewLikesAndDate.setText(mForum.getCreatedAt().toString());
+                Log.d(TAG, "setupForumRow: mForum: " + mForum.getCreatedByUid() + " mAuth: " + mAuth.getCurrentUser().getUid());
+
+                if (mForum.getCreatedByUid().equals(mAuth.getCurrentUser().getUid())){
+                    imageViewDeleteForum.setVisibility(View.INVISIBLE);
+
+                } else {
+                    imageViewDeleteForum.setVisibility(View.VISIBLE);
+                    imageViewDeleteForum.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            FirebaseFirestore db = FirebaseFirestore.getInstance();
+                            db.collection("forums").document(mForum.getForumId()).delete();
+                        }
+                    });
+                }
+
+
+
+
+            }
+        }
+    }
+
+    public String getSafeSubstring(String s, int maxLength){
+        if(!TextUtils.isEmpty(s)){
+            if(s.length() >= maxLength){
+                return s.substring(0, maxLength);
+            }
+        }
+        return s;
+    }
 
     interface ForumsListListener{
         void gotoForumDetails();

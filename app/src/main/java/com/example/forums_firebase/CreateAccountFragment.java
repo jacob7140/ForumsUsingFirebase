@@ -1,6 +1,7 @@
 package com.example.forums_firebase;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -49,17 +50,18 @@ public class CreateAccountFragment extends Fragment {
         editTextEmail = view.findViewById(R.id.editTextRegisterEmail);
         editTextPassword = view.findViewById(R.id.editTextRegisterPassword);
 
+
         view.findViewById(R.id.buttonRegisterSubmit).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String name = editTextName.getText().toString();
                 String email = editTextEmail.getText().toString();
                 String password = editTextPassword.getText().toString();
+                String name = editTextName.getText().toString();
 
                 if (email.isEmpty() | name.isEmpty() | password.isEmpty()){
                     Toast.makeText(getActivity(), "Cannot have empty fields", Toast.LENGTH_SHORT).show();
                 } else if (password.length() < 6){
-                    Toast.makeText(getActivity(), "Passowrd must be longer than 6 characters", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Password must be longer than 6 characters", Toast.LENGTH_SHORT).show();
                 } else {
                     mAuth = FirebaseAuth.getInstance();
                     mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
@@ -67,17 +69,20 @@ public class CreateAccountFragment extends Fragment {
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if (task.isSuccessful()){
                                 Log.d(TAG, "onComplete: Successfully created new account");
+                                Log.d(TAG, "onComplete: " + name);
+                                FirebaseUser user1 = FirebaseAuth.getInstance().getCurrentUser();
+                                UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                        .setDisplayName(name).build();
+                                user1.updateProfile(profileUpdates);
                                 mListener.gotoForumsList();
 
-                                UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder().setDisplayName(name).build();
-                                Log.d(TAG, "onComplete: New Account info: Name: " + user.getDisplayName() + " Email: "
-                                + user.getEmail());
                             } else{
                                 Log.d(TAG, "onComplete: Could not create new account" + task.getException().getMessage());
                                 Toast.makeText(getActivity(), "Error creating account", Toast.LENGTH_SHORT).show();
                             }
                         }
                     });
+
 
                 }
             }

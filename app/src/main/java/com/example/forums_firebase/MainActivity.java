@@ -6,7 +6,8 @@ import android.os.Bundle;
 
 import com.google.firebase.auth.FirebaseAuth;
 
-public class MainActivity extends AppCompatActivity implements LoginFragment.LoginListener, ForumsListFragment.ForumsListListener, CreateAccountFragment.RegisterListener {
+public class MainActivity extends AppCompatActivity implements LoginFragment.LoginListener, ForumsListFragment.ForumsListListener, CreateAccountFragment.RegisterListener,
+        CreateForumFragment.NewForumListener {
 
     FirebaseAuth mAuth;
 
@@ -65,6 +66,15 @@ public class MainActivity extends AppCompatActivity implements LoginFragment.Log
 
     @Override
     public void gotoAddNewForum() {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.rootView, new CreateForumFragment())
+                .commit();
+    }
 
+
+    @Override
+    public void goBackToForumsList() {
+        getSupportFragmentManager().beginTransaction().replace(R.id.rootView, new ForumsListFragment()).commit();
     }
 }
