@@ -51,8 +51,12 @@ public class MainActivity extends AppCompatActivity implements LoginFragment.Log
     }
 
     @Override
-    public void gotoForumDetails() {
-
+    public void gotoForumDetails(Forum forum) {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.rootView, ForumFragment.newInstance(forum))
+                .addToBackStack(null)
+                .commit();
     }
 
     @Override

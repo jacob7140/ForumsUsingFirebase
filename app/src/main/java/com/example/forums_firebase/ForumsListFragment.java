@@ -16,11 +16,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
@@ -29,6 +30,8 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class ForumsListFragment extends Fragment {
@@ -71,7 +74,7 @@ public class ForumsListFragment extends Fragment {
             }
         });
 
-        recyclerView = view.findViewById(R.id.recyclerView);
+        recyclerView = view.findViewById(R.id.forumRecyclerView);
         recyclerView.setHasFixedSize(true);
         layoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(layoutManager);
@@ -158,15 +161,17 @@ public class ForumsListFragment extends Fragment {
             public ForumViewHolder(@NonNull View itemView) {
                 super(itemView);
                 textViewTitle = itemView.findViewById(R.id.textViewTitle);
-                textViewDesc = itemView.findViewById(R.id.textViewDesc);
+                textViewDesc = itemView.findViewById(R.id.textViewComment);
                 textViewOwner = itemView.findViewById(R.id.textViewOwner);
                 textViewLikesAndDate = itemView.findViewById(R.id.textViewLikesAndDate);
                 imageViewDeleteForum = itemView.findViewById(R.id.imageViewDeleteForum);
+                imageViewLike = itemView.findViewById(R.id.imageViewLike);
+
 
                 itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        //mListener.gotoForumDetails();
+                        mListener.gotoForumDetails(mForum);
                     }
                 });
             }
@@ -174,37 +179,77 @@ public class ForumsListFragment extends Fragment {
             public void setupForumRow(Forum forum){
                 this.mForum = forum;
                 textViewTitle.setText(mForum.getTitle());
+                FirebaseFirestore db = FirebaseFirestore.getInstance();
+
 
                 textViewDesc.setText(getSafeSubstring(mForum.getDesc(), 200));
                 textViewOwner.setText(mForum.getCreatedByName());
 
                 mForum.setCreatedByUid(mAuth.getCurrentUser().getUid());
 
+
+                int likeCount = mForum.getLikedBy().size();
+                String likeString;
+                if (likeCount == 0){
+                    likeString = "No Likes";
+                } else if (likeCount == 1){
+                    likeString = "1 Like";
+                } else {
+                    likeString = likeCount + " likes";
+                }
+
+                if (mForum.getLikedBy().contains(mAuth.getCurrentUser())){
+                    imageViewLike.setImageResource(R.drawable.like_not_favorite);
+                } else {
+                    imageViewLike.setImageResource(R.drawable.like_favorite);
+                }
+
+                imageViewLike.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        if (mForum.getLikedBy().contains(mAuth.getCurrentUser().getUid())){
+                            imageViewLike.setImageResource(R.drawable.like_not_favorite);
+                            mForum.likedBy.remove(mAuth.getCurrentUser().getUid());
+
+                            HashMap<String, Object> unlikeUpdate = new HashMap<>();
+                            db.collection("forums").document(mForum.getForumId());
+
+                            Log.d(TAG, "onClick: Unliked Post" + mForum.getLikedBy());
+
+                        } else {
+                            mForum.likedBy.add(mAuth.getCurrentUser().getUid());
+                            imageViewLike.setImageResource(R.drawable.like_favorite);
+                            HashMap<String, Object> updateLikedBy = new HashMap<>();
+                            updateLikedBy.put("likedBy", mForum.getLikedBy());
+                            db.collection("forums").document(mForum.getForumId()).update(updateLikedBy);
+                            Log.d(TAG, "onClick: Liked post" + mForum.getLikedBy());
+                        }
+                    }
+                });
+
+
                 SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy h:m a");
-                textViewLikesAndDate.setText(formatter.format(mForum.getCreatedAt().toDate()));
-                //textViewLikesAndDate.setText(mForum.getCreatedAt().toString());
-                Log.d(TAG, "setupForumRow: mForum: " + mForum.getCreatedByUid() + " mAuth: " + mAuth.getCurrentUser().getUid());
+                textViewLikesAndDate.setText(likeString + " | " + formatter.format(mForum.getCreatedAt().toDate()));
 
                 if (mForum.getCreatedByUid().equals(mAuth.getCurrentUser().getUid())){
-                    imageViewDeleteForum.setVisibility(View.INVISIBLE);
-
-                } else {
                     imageViewDeleteForum.setVisibility(View.VISIBLE);
                     imageViewDeleteForum.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            FirebaseFirestore db = FirebaseFirestore.getInstance();
                             db.collection("forums").document(mForum.getForumId()).delete();
                         }
                     });
+
+                } else {
+                    imageViewDeleteForum.setVisibility(View.INVISIBLE);
                 }
-
-
 
 
             }
         }
     }
+
+
 
     public String getSafeSubstring(String s, int maxLength){
         if(!TextUtils.isEmpty(s)){
@@ -216,7 +261,7 @@ public class ForumsListFragment extends Fragment {
     }
 
     interface ForumsListListener{
-        void gotoForumDetails();
+        void gotoForumDetails(Forum forum);
         void logOut();
         void gotoAddNewForum();
     }

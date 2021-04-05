@@ -2,20 +2,23 @@ package com.example.forums_firebase;
 
 import com.google.firebase.Timestamp;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 
-public class Forum {
+public class Forum implements Serializable {
     String createdByName, title, desc, createdByUid, forumId;
     Timestamp createdAt;
-    private HashSet<Forum> likedBy;
+    ArrayList<String> likedBy = new ArrayList<>();
 
-    public Forum(String createdByName, String title, String desc, String createdByUid, Timestamp createdAt) {
+    public Forum(String createdByName, String title, String desc, String createdByUid, String forumId, Timestamp createdAt) {
         this.createdByName = createdByName;
         this.title = title;
         this.desc = desc;
         this.createdByUid = createdByUid;
+        this.forumId = forumId;
         this.createdAt = createdAt;
-        this.likedBy = new HashSet<>();
     }
 
     public Forum() {
@@ -69,11 +72,11 @@ public class Forum {
         this.createdAt = createdAt;
     }
 
-    public HashSet<Forum> getLikedBy() {
+    public ArrayList<String> getLikedBy() {
         return likedBy;
     }
 
-    public void setLikedBy(HashSet<Forum> likedBy) {
+    public void setLikedBy(ArrayList<String> likedBy) {
         this.likedBy = likedBy;
     }
 
@@ -84,7 +87,7 @@ public class Forum {
                 ", title='" + title + '\'' +
                 ", desc='" + desc + '\'' +
                 ", createdByUid='" + createdByUid + '\'' +
-                ", firumId='" + forumId + '\'' +
+                ", forumId='" + forumId + '\'' +
                 ", createdAt=" + createdAt +
                 '}';
     }
